@@ -34,7 +34,7 @@ prob <- logistic(-4 + .5 * sdoh_risk + pos(.5 * prs) + sdoh_risk * pos(.5 * prs)
 case <- rbinom(n, size=1, prob=prob) # Using prob to define true cases
 fit <- glm(case ~ prs, family=binomial)
 dat <- tibble(prs, sdoh_risk, ancestry, case)
-
+   
 dat |>
   mutate(prs_bin = cut_fun(prs, 10),
          sdoh_risk_bin = cut_fun(sdoh_risk, 4)) |>

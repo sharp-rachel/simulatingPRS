@@ -1,44 +1,51 @@
-# Script from Brian/Rachel at steelstring
-
 # Load libs
 library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(tibble)
+library(mvtnorm)
 
-# Load example data from mike
+# Setting up the PRS
+n <- 1e5
+prs <- rnorm(n)
 
-prs.dat <- read.csv("data/simulated_prs/mike_examples/03_29_24.csv")
+# Correlated vars
+corr_dat <- rmvnorm(n, sigma=cbind(c(1,.5), c(.5,1)))
+sdoh_risk <- corr_dat[,1]
+ancestry <- corr_dat[,2]
 
-# Try glm with simple model
+#smoothScatter(sdoh_risk, ancestry)
 
-# Define functions for case probabilities
-model1 <- glm(data = prs.dat, case ~ prs, family = binomial)
-summary(model1)
+# some functions for later
+logistic <- function(z) exp(z)/(1 + exp(z))
 
-# Make it additive w/ PRS and ancestry
-model2 <- glm(data = prs.dat, case ~ prs + ancestry, family = binomial)
-summary(model2)
+cut_fun <- function(x, n) {
+  cut(x, quantile(x, 0:n/n),
+      include.lowest = TRUE, labels=1:n)
+}
 
-# Make it additive with ancestry and sdoh
-model3 <- glm(data = prs.dat, case ~ prs + ancestry + sdoh_risk, family = binomial)
-summary(model3)
+pos <- function(x) ifelse(x < 0, 0, x) # making it so that when we take the log for prob, it's between 0-1
+#plot(logistic, xlim=c(-2,2), lwd=3, col="dodgerblue")
 
-# Make it interaction with ancestry and sdoh
-model4 <- glm(data = prs.dat, case ~ prs + ancestry + sdoh_risk + prs:sdoh_risk, family = binomial)
-summary(model4)
+# fxn to simulate model fit with different betas
+simulate_and_fit <- function(beta_interaction) {
+  prob <- logistic(-4 + .5 * sdoh_risk + pos(.5 * prs) + beta_interaction * sdoh_risk * prs)
+  case <- rbinom(n, size=1, prob=prob)
+  fit <- glm(case ~ prs + sdoh_risk + prs:sdoh_risk, family=binomial)
+  return(fit)
+}
 
-#Was the interaction term significant - repated = senstivity 
-# in how many sims was the coefficient sig?
-# we should have X power in our sample size to detect x effect size
+# Loop through different beta values for the interaction term
+beta_values <- seq(-1, 1, by = 0.1)
+significant_interaction_count <- numeric(length(beta_values))
 
-##Iterate through sample size, effect size, correlation
-##Step-wise thresholding effects?
+for (i in seq_along(beta_values)) {
+  fit <- simulate_and_fit(beta_values[i])
+  # Check if the interaction term is significant (p-value < 0.05)
+  if (summary(fit)$coefficients['prs:sdoh_risk', 'Pr(>|z|)'] < 0.05) {
+    significant_interaction_count[i] <- 1
+  }
+}
 
-
-###
-#outside loop where I iterate through effect sizes -> sapply([0.01, 0.02, 0.03])
-#inisde loop
-# sig <- replicate(10,000{
-#  rbinom
-#  glm()
-#  logical -> pval < 0.05
-#})
-#mean(sig)
+# Compute sensitivity (percentage of significant interaction terms)
+sensitivity <- mean(significant_interaction_count)
