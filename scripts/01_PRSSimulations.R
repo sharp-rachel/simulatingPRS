@@ -46,3 +46,24 @@ dat |>
   ggtitle("no interaction, just shift")
 
 write.csv(dat, "data/simulated_prs/mike_examples/03_29_24.csv", row.names = F)
+
+# Power sim from Mike
+betas <- 0:30/10
+nreps <- 2000
+n <- 10
+alpha <- .05
+
+sim <- function(n,b) rnorm(n, rep(c(0, 0+b), each=n/2))
+
+power <- sapply(betas, function(b) {
+  sig <- replicate(nreps, {
+    y <- sim(n, b)
+    x <- factor(rep(1:2,each=n/2))
+    fit <- lm(y ~ x)
+    coef <- summary(fit)$coefficients
+    coef["x2","Pr(>|t|)"] < alpha
+  })
+  mean(sig)
+})
+
+plot(betas, power, type="b")
