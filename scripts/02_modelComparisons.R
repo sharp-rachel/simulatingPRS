@@ -41,7 +41,7 @@ power <- sapply(beta_values, function(b) {
     coef["prs:sdoh_risk", "Pr(>|z|)"] < alpha
   })
   return(mean(sig))
-})
+})                                               
 
 # Plot power against effect size
 plot(beta_values, power, type = "b", xlab = "Effect Size (Beta)", ylab = "Power", main = "Power Analysis")
