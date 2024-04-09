@@ -7,7 +7,7 @@ n <- 20
 alpha <- .05
 prs <- rnorm(n)
 
-# Correlated vars
+# Correlated vars - correlation of ancestry and sdoh for Aim2
 corr_dat <- rmvnorm(n, sigma=cbind(c(1,.5), c(.5,1)))
 sdoh_risk <- corr_dat[,1]
 ancestry <- corr_dat[,2]
