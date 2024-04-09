@@ -1,8 +1,9 @@
 #1: variables being tested
 # beta, replicates, group size, alpha/threshold
 betas <- 0:30/10
-nreps <- 20
-n <- 500
+nreps <- 1000
+# MDD sample size
+n <- 20
 alpha <- .05
 prs <- rnorm(n)
 
@@ -14,9 +15,7 @@ ancestry <- corr_dat[,2]
 logistic <- function(z) exp(z)/(1 + exp(z))
 pos <- function(x) ifelse(x < 0, 0, x) # making it so that when we take the log for prob, it's between 0-1
 
-#2: function for sim phenos from a distribution
-sim <- function(n,b) rnorm(n, rep(c(0, 0+b), each=n/2))
-
+#Need to find odds of MDD - cases/controls - in my cohort?
 sim <- function(n,b, sdoh_risk, prs) rbinom(n, 1, logistic(-4 + .5 * sdoh_risk + pos(.5 * prs) + b * sdoh_risk * prs))
 
 power <- sapply(betas, function(b) {
